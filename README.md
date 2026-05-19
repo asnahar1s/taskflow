@@ -6,14 +6,14 @@ A secure, scalable REST API for task management with JWT authentication and role
 
 ## Features
 
-- **JWT Authentication** — access + refresh token flow with bcrypt password hashing
-- **Role-Based Access Control** — `user` and `admin` roles with route-level enforcement
-- **Full Task CRUD** — create, read, update (PATCH), and soft-delete tasks
-- **Pagination & Filtering** — filter by status/priority, paginate results
-- **Input Validation** — Pydantic v2 schemas with custom validators
-- **Structured Logging** — every request traced with request-id and duration
-- **Auto API Docs** — Swagger UI at `/docs`, ReDoc at `/redoc`
-- **Docker Ready** — one-command setup with PostgreSQL
+- **JWT Authentication** - access + refresh token flow with bcrypt password hashing
+- **Role-Based Access Control** - `user` and `admin` roles with route-level enforcement
+- **Full Task CRUD** - create, read, update (PATCH), and soft-delete tasks
+- **Pagination & Filtering** - filter by status/priority, paginate results
+- **Input Validation** - Pydantic v2 schemas with custom validators
+- **Structured Logging** - every request traced with request-id and duration
+- **Auto API Docs** - Swagger UI at `/docs`, ReDoc at `/redoc`
+- **Docker Ready** - one-command setup with PostgreSQL
 
 ---
 
@@ -33,7 +33,7 @@ A secure, scalable REST API for task management with JWT authentication and role
 
 ## Quick Start
 
-### Option A — Docker (Recommended)
+### Option A - Docker (Recommended)
 
 ```bash
 git clone <your-repo-url>
@@ -41,7 +41,7 @@ cd taskflow
 cp .env.example .env          # edit SECRET_KEY in .env
 docker-compose up --build
 ```
-
+Health check: **http://localhost:8000/health** - API status
 API is live at **http://localhost:8000**  
 Swagger docs at **http://localhost:8000/docs**
 
@@ -226,9 +226,9 @@ Single FastAPI instance → PostgreSQL
 ```
 
 **Why this scales:**
-- **Stateless API** — JWT tokens carry all session state; any pod can serve any request
-- **Connection pooling** — SQLAlchemy pool_size=10 / max_overflow=20 per pod; add PgBouncer for 1000s of pods
-- **Read replicas** — Route `GET` queries to read replicas via SQLAlchemy multiple engines
+- **Stateless API** - JWT tokens carry all session state; any pod can serve any request
+- **Connection pooling** - SQLAlchemy pool_size=10 / max_overflow=20 per pod; add PgBouncer for 1000s of pods
+- **Read replicas** - Route `GET` queries to read replicas via SQLAlchemy multiple engines
 
 ### Caching Layer (Redis)
 ```python
@@ -248,11 +248,11 @@ if cached: return json.loads(cached)
 | notification-service | Due-date alerts, emails |
 
 ### Additional Production Recommendations
-- **Rate limiting** — SlowAPI (already in requirements) or nginx `limit_req`
-- **Token blacklist** — Store logged-out JWTs in Redis until expiry
-- **Database migrations** — Use Alembic instead of `create_all()`
-- **Observability** — Export structlog to Datadog / Grafana Loki
-- **CI/CD** — GitHub Actions: lint → test → build Docker → deploy
+- **Rate limiting** - SlowAPI (already in requirements) or nginx `limit_req`
+- **Token blacklist** - Store logged-out JWTs in Redis until expiry
+- **Database migrations** - Use Alembic instead of `create_all()`
+- **Observability** - Export structlog to Datadog / Grafana Loki
+- **CI/CD** - GitHub Actions: lint → test → build Docker → deploy
 
 ---
 
