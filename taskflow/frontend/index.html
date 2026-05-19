@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TaskFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --danger: #ff4757;
+    --warning: #ffa502;
+    --success: #2ed573;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 12px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 260px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px 16px; gap: 8px;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 10;
+  }
+  .main { margin-left: 260px; flex: 1; padding: 32px; max-width: 1100px; }
+
+  /* Logo */
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; padding: 8px 16px 24px; }
+  .logo span { color: var(--accent); }
+
+  /* Nav */
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-radius: var(--radius); cursor: pointer; transition: all 0.2s;
+    font-weight: 500; color: var(--muted); font-size: 14px; border: none;
+    background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(108,99,255,0.15); color: var(--accent); }
+  .nav-item .icon { font-size: 18px; }
+  .nav-divider { height: 1px; background: var(--border); margin: 8px 0; }
+  .nav-bottom { margin-top: auto; }
+
+  /* Auth pages */
+  .auth-page {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); padding: 24px;
+  }
+  .auth-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow);
+  }
+  .auth-card h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+  .auth-card .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 14px; }
+  .auth-logo { font-size: 32px; font-weight: 800; margin-bottom: 24px; }
+  .auth-logo span { color: var(--accent); }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--muted); letter-spacing: 0.5px; }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 14px;
+    transition: border-color 0.2s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 20px; border-radius: 8px; font-family: var(--font);
+    font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.2s; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #5a52e0; transform: translateY(-1px); }
+  .btn-danger { background: rgba(255,71,87,0.15); color: var(--danger); border: 1px solid rgba(255,71,87,0.3); }
+  .btn-danger:hover { background: rgba(255,71,87,0.25); }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px;
+  }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+  /* Page header */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .page-title { font-size: 28px; font-weight: 800; }
+  .page-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .stat-value { font-size: 32px; font-weight: 800; }
+  .stat-accent { color: var(--accent); }
+
+  /* Tasks */
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
+    color: var(--muted); transition: all 0.2s;
+  }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .task-list { display: flex; flex-direction: column; gap: 10px; }
+  .task-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 20px; display: flex; align-items: center; gap: 16px;
+    transition: border-color 0.2s;
+  }
+  .task-card:hover { border-color: var(--accent); }
+  .task-info { flex: 1; }
+  .task-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .task-desc { font-size: 13px; color: var(--muted); }
+  .task-meta { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+  .task-actions { display: flex; gap: 8px; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-todo { background: rgba(107,107,138,0.2); color: var(--muted); }
+  .badge-in_progress { background: rgba(108,99,255,0.2); color: var(--accent); }
+  .badge-done { background: rgba(46,213,115,0.2); color: var(--success); }
+  .badge-low { background: rgba(67,233,123,0.1); color: var(--accent3); }
+  .badge-medium { background: rgba(255,165,2,0.15); color: var(--warning); }
+  .badge-high { background: rgba(255,71,87,0.15); color: var(--danger); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 32px; width: 100%; max-width: 480px; box-shadow: var(--shadow);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .modal-title { font-size: 20px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; padding: 4px; }
+
+  /* Alert */
+  .alert {
+    padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px;
+    border: 1px solid; display: flex; align-items: center; gap: 8px;
+  }
+  .alert-error { background: rgba(255,71,87,0.1); color: var(--danger); border-color: rgba(255,71,87,0.3); }
+  .alert-success { background: rgba(46,213,115,0.1); color: var(--success); border-color: rgba(46,213,115,0.3); }
+
+  /* Badge role */
+  .role-badge {
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+    background: rgba(108,99,255,0.2); color: var(--accent); text-transform: uppercase;
+    font-family: var(--mono);
+  }
+  .role-badge.admin { background: rgba(255,165,2,0.2); color: var(--warning); }
+
+  /* User list */
+  .user-row {
+    display: flex; align-items: center; gap: 16px; padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .user-avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .user-info { flex: 1; }
+  .user-name { font-weight: 600; }
+  .user-email { font-size: 13px; color: var(--muted); }
+
+  /* Link */
+  .link { color: var(--accent); cursor: pointer; background: none; border: none; font-family: var(--font); font-size: inherit; text-decoration: underline; }
+
+  /* Spinner */
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useCallback } = React;
+
+// ── API layer ────────────────────────────────────────────────────────────────
+const API = "http://localhost:8000/api/v1";
+
+async function apiFetch(path, opts = {}) {
+  const token = localStorage.getItem("access_token");
+  const headers = { "Content-Type": "application/json", ...opts.headers };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Request failed");
+  return data;
+}
+
+const api = {
+  register: (body) => apiFetch("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  login: async (body) => {
+    const data = await apiFetch("/auth/login", { method: "POST", body: JSON.stringify(body) });
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    return data;
+  },
+  me: () => apiFetch("/auth/me"),
+  logout: () => { localStorage.clear(); },
+  getTasks: (params = "") => apiFetch(`/tasks/${params}`),
+  createTask: (body) => apiFetch("/tasks/", { method: "POST", body: JSON.stringify(body) }),
+  updateTask: (id, body) => apiFetch(`/tasks/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteTask: (id) => apiFetch(`/tasks/${id}`, { method: "DELETE" }),
+  getUsers: () => apiFetch("/users/"),
+};
+
+// ── Components ───────────────────────────────────────────────────────────────
+
+function Alert({ type, msg }) {
+  if (!msg) return null;
+  return React.createElement("div", { className: `alert alert-${type}` },
+    type === "error" ? "✕" : "✓", " ", msg
+  );
+}
+
+function Badge({ type, label, prefix = "" }) {
+  return React.createElement("span", { className: `badge badge-${type}` }, prefix + label);
+}
+
+function Spinner() {
+  return React.createElement("div", { className: "spinner" });
+}
+
+// ── Auth screens ─────────────────────────────────────────────────────────────
+
+function LoginPage({ onLogin, onSwitch }) {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    setErr(""); setLoading(true);
+    try {
+      await api.login(form);
+      onLogin();
+    } catch (e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const f = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  return React.createElement("div", { className: "auth-page" },
+    React.createElement("div", { className: "auth-card" },
+      React.createElement("div", { className: "auth-logo" }, "Task", React.createElement("span", null, "Flow")),
+      React.createElement("h1", null, "Welcome back"),
+      React.createElement("p", { className: "subtitle" }, "Sign in to your workspace"),
+      React.createElement(Alert, { type: "error", msg: err }),
+      React.createElement("div", { className: "form-group" },
+        React.createElement("label", null, "EMAIL"),
+        React.createElement("input", { type: "email", value: form.email, onChange: f("email"), placeholder: "you@example.com" })
+      ),
+      React.createElement("div", { className: "form-group" },
+        React.createElement("label", null, "PASSWORD"),
+        React.createElement("input", { type: "password", value: form.password, onChange: f("password"), placeholder: "••••••••",
+          onKeyDown: (e) => e.key === "Enter" && submit() })
+      ),
+      React.createElement("button", { className: "btn btn-primary btn-full", onClick: submit, disabled: loading },
+        loading ? React.createElement(Spinner) : "Sign In"
+      ),
+      React.createElement("p", { style: { marginTop: 20, textAlign: "center", fontSize: 14, color: "var(--muted)" } },
+        "No account? ", React.createElement("button", { className: "link", onClick: onSwitch }, "Register")
+      )
+    )
+  );
+}
+
+function RegisterPage({ onSuccess, onSwitch }) {
+  const [form, setForm] = useState({ email: "", username: "", password: "" });
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    setErr(""); setLoading(true);
+    try {
+      await api.register(form);
+      setSuccess("Account created! Please log in.");
+      setTimeout(onSwitch, 1500);
+    } catch (e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const f = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  return React.createElement("div", { className: "auth-page" },
+    React.createElement("div", { className: "auth-card" },
+      React.createElement("div", { className: "auth-logo" }, "Task", React.createElement("span", null, "Flow")),
+      React.createElement("h1", null, "Create account"),
+      React.createElement("p", { className: "subtitle" }, "Join your team's workspace"),
+      React.createElement(Alert, { type: "error", msg: err }),
+      React.createElement(Alert, { type: "success", msg: success }),
+      ["email", "username", "password"].map(k =>
+        React.createElement("div", { className: "form-group", key: k },
+          React.createElement("label", null, k.toUpperCase()),
+          React.createElement("input", { type: k === "password" ? "password" : "text", value: form[k], onChange: f(k),
+            placeholder: k === "email" ? "you@example.com" : k === "username" ? "cooluser" : "Min 8 chars + uppercase + digit" })
+        )
+      ),
+      React.createElement("button", { className: "btn btn-primary btn-full", onClick: submit, disabled: loading },
+        loading ? React.createElement(Spinner) : "Create Account"
+      ),
+      React.createElement("p", { style: { marginTop: 20, textAlign: "center", fontSize: 14, color: "var(--muted)" } },
+        "Have an account? ", React.createElement("button", { className: "link", onClick: onSwitch }, "Sign in")
+      )
+    )
+  );
+}
+
+// ── Task Modal ────────────────────────────────────────────────────────────────
+
+function TaskModal({ task, onClose, onSaved }) {
+  const isEdit = !!task?.id;
+  const [form, setForm] = useState({
+    title: task?.title || "",
+    description: task?.description || "",
+    priority: task?.priority || "medium",
+    status: task?.status || "todo",
+    due_date: task?.due_date ? task.due_date.slice(0, 16) : "",
+  });
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const f = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const submit = async () => {
+    if (!form.title.trim()) { setErr("Title is required"); return; }
+    setErr(""); setLoading(true);
+    try {
+      const body = { ...form, due_date: form.due_date ? new Date(form.due_date).toISOString() : null };
+      if (isEdit) await api.updateTask(task.id, body);
+      else await api.createTask(body);
+      onSaved();
+    } catch (e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  return React.createElement("div", { className: "modal-overlay", onClick: (e) => e.target === e.currentTarget && onClose() },
+    React.createElement("div", { className: "modal" },
+      React.createElement("div", { className: "modal-header" },
+        React.createElement("h2", { className: "modal-title" }, isEdit ? "Edit Task" : "New Task"),
+        React.createElement("button", { className: "modal-close", onClick: onClose }, "×")
+      ),
+      React.createElement(Alert, { type: "error", msg: err }),
+      React.createElement("div", { className: "form-group" },
+        React.createElement("label", null, "TITLE"),
+        React.createElement("input", { value: form.title, onChange: f("title"), placeholder: "What needs to be done?" })
+      ),
+      React.createElement("div", { className: "form-group" },
+        React.createElement("label", null, "DESCRIPTION"),
+        React.createElement("textarea", { value: form.description, onChange: f("description"), placeholder: "Optional details..." })
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } },
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", null, "PRIORITY"),
+          React.createElement("select", { value: form.priority, onChange: f("priority") },
+            ["low", "medium", "high"].map(v => React.createElement("option", { key: v, value: v }, v.charAt(0).toUpperCase() + v.slice(1)))
+          )
+        ),
+        React.createElement("div", { className: "form-group" },
+          React.createElement("label", null, "STATUS"),
+          React.createElement("select", { value: form.status, onChange: f("status") },
+            [["todo","To Do"],["in_progress","In Progress"],["done","Done"]].map(([v,l]) => React.createElement("option", { key: v, value: v }, l))
+          )
+        )
+      ),
+      React.createElement("div", { className: "form-group" },
+        React.createElement("label", null, "DUE DATE"),
+        React.createElement("input", { type: "datetime-local", value: form.due_date, onChange: f("due_date") })
+      ),
+      React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } },
+        React.createElement("button", { className: "btn btn-ghost", onClick: onClose }, "Cancel"),
+        React.createElement("button", { className: "btn btn-primary", onClick: submit, disabled: loading },
+          loading ? React.createElement(Spinner) : isEdit ? "Save Changes" : "Create Task"
+        )
+      )
+    )
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+function Dashboard({ user }) {
+  const [tasks, setTasks] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState("all");
+  const [modal, setModal] = useState(null);
+  const [err, setErr] = useState("");
+
+  const load = useCallback(async () => {
+    try {
+      const params = filter !== "all" ? `?status=${filter}` : "";
+      const d = await api.getTasks(params);
+      setTasks(d.tasks); setTotal(d.total);
+    } catch (e) { setErr(e.message); }
+  }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const del = async (id) => {
+    if (!confirm("Delete this task?")) return;
+    try { await api.deleteTask(id); load(); } catch (e) { setErr(e.message); }
+  };
+
+  const counts = tasks.reduce((a, t) => ({ ...a, [t.status]: (a[t.status] || 0) + 1 }), {});
+
+  return React.createElement("div", null,
+    React.createElement("div", { className: "page-header" },
+      React.createElement("div", null,
+        React.createElement("h1", { className: "page-title" }, "Dashboard"),
+        React.createElement("p", { className: "page-sub" }, `Welcome back, ${user.username}!`)
+      ),
+      React.createElement("button", { className: "btn btn-primary", onClick: () => setModal({}) }, "+ New Task")
+    ),
+    React.createElement("div", { className: "stats-grid" },
+      [["Total", total, "stat-accent"], ["To Do", counts.todo || 0, ""], ["In Progress", counts.in_progress || 0, ""], ["Done", counts.done || 0, ""]].map(([label, val, cls]) =>
+        React.createElement("div", { className: "stat-card", key: label },
+          React.createElement("div", { className: "stat-label" }, label),
+          React.createElement("div", { className: `stat-value ${cls}` }, val)
+        )
+      )
+    ),
+    React.createElement(Alert, { type: "error", msg: err }),
+    React.createElement("div", { className: "filters" },
+      [["all","All"],["todo","To Do"],["in_progress","In Progress"],["done","Done"]].map(([v,l]) =>
+        React.createElement("button", { key: v, className: `filter-btn ${filter === v ? "active" : ""}`,
+          onClick: () => setFilter(v) }, l)
+      )
+    ),
+    tasks.length === 0
+      ? React.createElement("div", { className: "empty" },
+          React.createElement("div", { className: "empty-icon" }, "📋"),
+          React.createElement("h3", null, "No tasks yet"),
+          React.createElement("p", null, "Create your first task to get started")
+        )
+      : React.createElement("div", { className: "task-list" },
+          tasks.map(t =>
+            React.createElement("div", { className: "task-card", key: t.id },
+              React.createElement("div", { className: "task-info" },
+                React.createElement("div", { className: "task-title" }, t.title),
+                t.description && React.createElement("div", { className: "task-desc" }, t.description),
+                React.createElement("div", { className: "task-meta" },
+                  React.createElement(Badge, { type: t.status, label: t.status.replace("_", " ") }),
+                  React.createElement(Badge, { type: t.priority, label: t.priority }),
+                  t.due_date && React.createElement("span", { style: { fontSize: 12, color: "var(--muted)" } },
+                    "Due: " + new Date(t.due_date).toLocaleDateString()
+                  )
+                )
+              ),
+              React.createElement("div", { className: "task-actions" },
+                React.createElement("button", { className: "btn btn-ghost btn-sm", onClick: () => setModal(t) }, "Edit"),
+                React.createElement("button", { className: "btn btn-danger btn-sm", onClick: () => del(t.id) }, "Delete")
+              )
+            )
+          )
+        ),
+    modal !== null && React.createElement(TaskModal, {
+      task: modal,
+      onClose: () => setModal(null),
+      onSaved: () => { setModal(null); load(); }
+    })
+  );
+}
+
+// ── Admin Users ───────────────────────────────────────────────────────────────
+
+function UsersPage() {
+  const [users, setUsers] = useState([]);
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getUsers().then(d => { setUsers(d); setLoading(false); }).catch(e => { setErr(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return React.createElement("div", { style: { padding: 40, textAlign: "center" } }, React.createElement(Spinner));
+
+  return React.createElement("div", null,
+    React.createElement("div", { className: "page-header" },
+      React.createElement("div", null,
+        React.createElement("h1", { className: "page-title" }, "Users"),
+        React.createElement("p", { className: "page-sub" }, "Manage all registered users")
+      )
+    ),
+    React.createElement(Alert, { type: "error", msg: err }),
+    React.createElement("div", { className: "card" },
+      users.map(u =>
+        React.createElement("div", { className: "user-row", key: u.id },
+          React.createElement("div", { className: "user-avatar" }, u.username[0].toUpperCase()),
+          React.createElement("div", { className: "user-info" },
+            React.createElement("div", { className: "user-name" }, u.username,
+              " ", React.createElement("span", { className: `role-badge ${u.role}` }, u.role)
+            ),
+            React.createElement("div", { className: "user-email" }, u.email)
+          ),
+          React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } },
+            u.is_active ? "✅ Active" : "🚫 Inactive"
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+function ProfilePage({ user }) {
+  return React.createElement("div", null,
+    React.createElement("div", { className: "page-header" },
+      React.createElement("h1", { className: "page-title" }, "Profile")
+    ),
+    React.createElement("div", { className: "card", style: { maxWidth: 480 } },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 20, marginBottom: 24 } },
+        React.createElement("div", { className: "user-avatar", style: { width: 64, height: 64, fontSize: 28 } },
+          user.username[0].toUpperCase()
+        ),
+        React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: 20, fontWeight: 700 } }, user.username),
+          React.createElement("div", { style: { color: "var(--muted)", fontSize: 14 } }, user.email),
+          React.createElement("span", { className: `role-badge ${user.role}`, style: { marginTop: 6, display: "inline-block" } }, user.role)
+        )
+      ),
+      [["User ID", `#${user.id}`], ["Email", user.email], ["Status", user.is_active ? "Active" : "Inactive"],
+       ["Member since", new Date(user.created_at).toLocaleDateString()]].map(([k, v]) =>
+        React.createElement("div", { key: k, style: { display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" } },
+          React.createElement("span", { style: { color: "var(--muted)", fontSize: 14 } }, k),
+          React.createElement("span", { style: { fontWeight: 600, fontFamily: k === "User ID" ? "var(--mono)" : "inherit" } }, v)
+        )
+      )
+    )
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+
+function Sidebar({ page, setPage, user, onLogout }) {
+  const items = [
+    { id: "dashboard", icon: "⚡", label: "Dashboard" },
+    { id: "profile", icon: "👤", label: "Profile" },
+    ...(user.role === "admin" ? [{ id: "users", icon: "👥", label: "Users" }] : []),
+  ];
+
+  return React.createElement("div", { className: "sidebar" },
+    React.createElement("div", { className: "logo" }, "Task", React.createElement("span", null, "Flow")),
+    items.map(item =>
+      React.createElement("button", { key: item.id, className: `nav-item ${page === item.id ? "active" : ""}`,
+        onClick: () => setPage(item.id) },
+        React.createElement("span", { className: "icon" }, item.icon), item.label
+      )
+    ),
+    React.createElement("div", { className: "nav-divider" }),
+    React.createElement("div", { className: "nav-bottom" },
+      React.createElement("div", { style: { padding: "8px 16px", marginBottom: 8 } },
+        React.createElement("div", { style: { fontSize: 13, fontWeight: 600 } }, user.username),
+        React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } }, user.email)
+      ),
+      React.createElement("button", { className: "nav-item", onClick: onLogout },
+        React.createElement("span", { className: "icon" }, "🚪"), "Sign out"
+      )
+    )
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [screen, setScreen] = useState("login"); // login | register
+  const [user, setUser] = useState(null);
+  const [page, setPage] = useState("dashboard");
+
+  useEffect(() => {
+    if (localStorage.getItem("access_token")) {
+      api.me().then(setUser).catch(() => localStorage.clear());
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    const u = await api.me();
+    setUser(u);
+  };
+
+  const handleLogout = () => { api.logout(); setUser(null); setScreen("login"); };
+
+  if (!user) {
+    if (screen === "register")
+      return React.createElement(RegisterPage, { onSuccess: () => setScreen("login"), onSwitch: () => setScreen("login") });
+    return React.createElement(LoginPage, { onLogin: handleLogin, onSwitch: () => setScreen("register") });
+  }
+
+  const pageContent = {
+    dashboard: React.createElement(Dashboard, { user }),
+    profile: React.createElement(ProfilePage, { user }),
+    users: React.createElement(UsersPage),
+  }[page] || React.createElement(Dashboard, { user });
+
+  return React.createElement("div", { className: "app" },
+    React.createElement(Sidebar, { page, setPage, user, onLogout: handleLogout }),
+    React.createElement("div", { className: "main" }, pageContent)
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
